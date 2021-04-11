@@ -1,10 +1,11 @@
 from typing import Dict, List
 from assetuniverse import AssetUniverse
 import numpy as np
+import scipy.optimize as opt
 import pandas as pd
 
 class Subportfolio(object):
-    def __init__(self, params: Dict, au: AssetUniverse, assets: pd.DataFrame):
+    def __init__(self, params: Dict, au: AssetUniverse, assets: pd.DataFrame, id: int):
         self.lookback = params[0]
         self.momentum_metric = params[1]
         self.qualitative_metric = params[2]
@@ -28,7 +29,9 @@ class Subportfolio(object):
 
         keep_assets = self.sort_by_qualitative_metric(assets)
         assets = self.sort_by_metric(keep_assets)
-        self.weights = self.minvar_optimization(assets)
+        self.weights = self.optimize(assets)
+        if id % 100 == 0:
+            print(f'Finished subportfolio: {id}')
 
     def sort_by_qualitative_metric(self, assets: pd.DataFrame) -> List:
         without_rating = assets[['Stock/ETF', self.qualitative_metric]].loc[assets[self.qualitative_metric].isna()]
@@ -39,7 +42,9 @@ class Subportfolio(object):
             ignore_index=True
             )
         num_keep = int(np.ceil(max(self.qualitative_threshold*len(with_rating), self.qualitative_min_keep)))
-        keep_assets = with_rating['Stock/ETF'].loc[:num_keep].to_list() + without_rating['Stock/ETF'].to_list()
+        keep_assets = with_rating['Stock/ETF'].iloc[-num_keep:].to_list() + without_rating['Stock/ETF'].to_list()
+        if self.qualitative_metric == 'Valueline 3-5 Year Proj. Return High':
+            x = 1
         return keep_assets
 
     def sort_by_metric(self, assets: List) -> List:
@@ -48,9 +53,30 @@ class Subportfolio(object):
         num_keep = int(np.ceil(max(self.subportfolio_threshold*len(assets), self.subportfolio_min_keep)))
         return metric[-num_keep:].index.to_list()
 
-    def minvar_optimization(self, assets: List) -> np.ndarray:
-        return np.zeros(3)
+    def optimize(self, assets: List) -> np.ndarray:
+        covmatrix = self.au.covariance_matrix(symbols=assets, rand_drop_percent=0.10)
+        cons = [
+            {'type': 'eq', 'fun': lambda x: np.sum(x) - 1.0},           # sum of weights must match 1.0
+            ]
 
-    # def __add__(self, other):
-    #     pass
-        
+        result = opt.minimize(
+            fun=self._expected_variance,
+            x0=np.ones(len(assets))/len(assets),
+            args=covmatrix,
+            method='SLSQP',
+            constraints=cons,
+            bounds=opt.Bounds(0, self.max_ind_allocation),
+            tol=1e-13,
+            options={'maxiter': 1000, 'disp': False}
+        )
+        optimized_weights = result.x.transpose()
+
+        weights = pd.Series(
+            data=np.zeros(len(self.au.sym)), 
+            index=self.au.sym
+            )
+        weights.loc[assets] = optimized_weights
+        return weights
+
+    def _expected_variance(self, weights, covmatrix):
+        return np.matmul(weights, np.matmul(covmatrix, weights.T))

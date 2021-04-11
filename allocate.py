@@ -10,13 +10,14 @@ from portfolio import Portfolio
 
 parser = argparse.ArgumentParser(description='Allocate portfolio using adaptive asset allocation principals.')
 parser.add_argument('assetsfile', type=str)
+parser.add_argument('-n', '--nav', type=float, default=100000, help='Portfolio net asset value ($)')
 args = parser.parse_args()
 
 # Define subportfolio parameters
-lookbacks = [30, 60, 90, 180, 365]
+lookbacks = [21, 42, 63, 125, 252]
 momentum_metrics = [
     metrics.total_return,
-    metrics.sharpe_ratio
+    # metrics.sharpe_ratio
 ]
 qualitative_metrics = [
     'Morningstar Star Rating (1-5)',
@@ -29,32 +30,32 @@ qualitative_metrics = [
 qualitative_thresholds = [0.2, 0.333, 0.5, 0.667]
 qualitative_min_keep = [2,]
 subportfolio_thresholds = [0.2, 0.333, 0.5, 0.667]
-subportfolio_min_keep = [4,]
-max_ind_allocations = [0.25, 0.333, 0.5, 0.667, 0.75]
+subportfolio_min_keep = [3,]
+max_ind_allocations = [0.4, 0.5, 0.667, 0.75]
 
 # Define asset universe
 assets = pd.read_excel(args.assetsfile)
 end = datetime.datetime.today()
-start = end - datetime.timedelta(days=max(lookbacks) + 1)
+start = end - datetime.timedelta(days=(8/5)*max(lookbacks) + 10)
 au = AssetUniverse(start, end, assets['Stock/ETF'].to_list())
 
 # Create subportfolios
-subportfolios = [Subportfolio(params, au, assets) 
-    for params in itertools.product(
-    lookbacks,
-    momentum_metrics,
-    qualitative_metrics,
-    qualitative_thresholds,
-    qualitative_min_keep,
-    subportfolio_thresholds,
-    subportfolio_min_keep,
-    max_ind_allocations
-)]
+subportfolios = [Subportfolio(params, au, assets, i) 
+    for i, params in enumerate(itertools.product(
+        lookbacks,
+        momentum_metrics,
+        qualitative_metrics,
+        qualitative_thresholds,
+        qualitative_min_keep,
+        subportfolio_thresholds,
+        subportfolio_min_keep,
+        max_ind_allocations
+    ))
+]
 
 # Combine subportfolios
-portfolio = Portfolio(subportfolios)
+portfolio = Portfolio(subportfolios, au, args.nav)
 
 # Display
 print(portfolio)
-au.plot_prices()
-
+au.plotprices()
