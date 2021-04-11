@@ -1,4 +1,4 @@
-import datetime.datetime
+import datetime
 import argparse
 import pandas as pd
 import itertools
@@ -9,7 +9,7 @@ from subportfolio import Subportfolio
 from portfolio import Portfolio
 
 parser = argparse.ArgumentParser(description='Allocate portfolio using adaptive asset allocation principals.')
-parser.add_argument('assetsfile', type=argparse.FileType('r'))
+parser.add_argument('assetsfile', type=str)
 args = parser.parse_args()
 
 # Define subportfolio parameters
@@ -26,24 +26,27 @@ qualitative_metrics = [
     'Valueline Timeliness (1-5)',
     'Valueline Safety (1-5)'
 ]
-qualitative_thresholds = [0.2, 0.3, 0.4, 0.5, 0.6]
+qualitative_thresholds = [0.2, 0.333, 0.5, 0.667]
 qualitative_min_keep = [2,]
+subportfolio_thresholds = [0.2, 0.333, 0.5, 0.667]
 subportfolio_min_keep = [4,]
 max_ind_allocations = [0.25, 0.333, 0.5, 0.667, 0.75]
-
 
 # Define asset universe
 assets = pd.read_excel(args.assetsfile)
 end = datetime.datetime.today()
-start = end - max(lookbacks) - 1
-au = AssetUniverse(start, end, assets.index)
+start = end - datetime.timedelta(days=max(lookbacks) + 1)
+au = AssetUniverse(start, end, assets['Stock/ETF'].to_list())
 
 # Create subportfolios
-subportfolios = [Subportfolio(params, au) for params in itertools(
+subportfolios = [Subportfolio(params, au, assets) 
+    for params in itertools.product(
     lookbacks,
     momentum_metrics,
+    qualitative_metrics,
     qualitative_thresholds,
     qualitative_min_keep,
+    subportfolio_thresholds,
     subportfolio_min_keep,
     max_ind_allocations
 )]
