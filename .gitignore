@@ -1,6 +1,7 @@
 *.xlsx
 *.html
 *.json
+.vscode/settings.json
 
 ### Linux ###
 *~
