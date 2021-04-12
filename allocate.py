@@ -17,7 +17,8 @@ args = parser.parse_args()
 lookbacks = [21, 42, 63, 125, 252]
 momentum_metrics = [
     metrics.total_return,
-    # metrics.sharpe_ratio
+    metrics.sharpe_ratio,
+    metrics.z_score
 ]
 qualitative_metrics = [
     'Morningstar Star Rating (1-5)',
@@ -40,7 +41,16 @@ start = end - datetime.timedelta(days=(8/5)*max(lookbacks) + 10)
 au = AssetUniverse(start, end, assets['Stock/ETF'].to_list())
 
 # Create subportfolios
-subportfolios = [Subportfolio(params, au, assets, i) 
+num_subportfolios = len(lookbacks)* \
+                    len(momentum_metrics)* \
+                    len(qualitative_metrics)* \
+                    len(qualitative_thresholds)* \
+                    len(qualitative_min_keep)* \
+                    len(subportfolio_thresholds)* \
+                    len(subportfolio_min_keep)* \
+                    len(max_ind_allocations)
+
+subportfolios = [Subportfolio(params, au, assets, i, num_subportfolios) 
     for i, params in enumerate(itertools.product(
         lookbacks,
         momentum_metrics,

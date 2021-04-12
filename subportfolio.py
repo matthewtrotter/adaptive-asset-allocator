@@ -5,7 +5,7 @@ import scipy.optimize as opt
 import pandas as pd
 
 class Subportfolio(object):
-    def __init__(self, params: Dict, au: AssetUniverse, assets: pd.DataFrame, id: int):
+    def __init__(self, params: Dict, au: AssetUniverse, assets: pd.DataFrame, id: int, total_ids: int):
         self.lookback = params[0]
         self.momentum_metric = params[1]
         self.qualitative_metric = params[2]
@@ -30,8 +30,8 @@ class Subportfolio(object):
         keep_assets = self.sort_by_qualitative_metric(assets)
         assets = self.sort_by_metric(keep_assets)
         self.weights = self.optimize(assets)
-        if id % 100 == 0:
-            print(f'Finished subportfolio: {id}')
+        if id % 100 == 0 and id > 0:
+            print(f'Finished subportfolio: {id} of {total_ids}')
 
     def sort_by_qualitative_metric(self, assets: pd.DataFrame) -> List:
         without_rating = assets[['Stock/ETF', self.qualitative_metric]].loc[assets[self.qualitative_metric].isna()]
@@ -48,7 +48,7 @@ class Subportfolio(object):
         return keep_assets
 
     def sort_by_metric(self, assets: List) -> List:
-        metric, ascending = self.momentum_metric(self.au.p[assets], self.lookback)
+        metric, ascending = self.momentum_metric(self.au.p[assets], self.au.r[assets], self.lookback)
         metric = metric.sort_values(ascending=ascending)
         num_keep = int(np.ceil(max(self.subportfolio_threshold*len(assets), self.subportfolio_min_keep)))
         return metric[-num_keep:].index.to_list()
