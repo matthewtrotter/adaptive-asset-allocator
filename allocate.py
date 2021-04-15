@@ -28,11 +28,11 @@ qualitative_metrics = [
     'Valueline Timeliness (1-5)',
     'Valueline Safety (1-5)'
 ]
-qualitative_thresholds = [0.2, 0.333, 0.5, 0.667]
+qualitative_thresholds = [0.2, 0.333, 0.5]
 qualitative_min_keep = [2,]
-subportfolio_thresholds = [0.2, 0.333, 0.5, 0.667]
+subportfolio_thresholds = [0.2, 0.333, 0.5]
 subportfolio_min_keep = [3,]
-max_ind_allocations = [0.4, 0.5, 0.667, 0.75]
+max_ind_allocations = [0.4, 0.5, 0.6]
 
 # Define asset universe
 assets = pd.read_excel(args.assetsfile)
