@@ -36,7 +36,7 @@ max_ind_allocations = [0.4, 0.5, 0.6]
 
 # Define asset universe
 assets = pd.read_excel(args.assetsfile)
-end = datetime.datetime.today()
+end = datetime.date.today()
 start = end - datetime.timedelta(days=(8/5)*max(lookbacks) + 10)
 au = AssetUniverse(start, end, assets['Stock/ETF'].to_list())
 
