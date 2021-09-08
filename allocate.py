@@ -1,5 +1,6 @@
 import datetime
 import argparse
+import assetuniverse
 import pandas as pd
 import itertools
 
@@ -7,6 +8,30 @@ from assetuniverse import AssetUniverse
 import metrics
 from subportfolio import Subportfolio
 from portfolio import Portfolio
+
+
+def parse_to_contracts(assets: pd.DataFrame):
+    """Parse the symbols in the dataframe into assetuniverse contracts
+
+    Parameters
+    ----------
+    assets : pd.DataFrame
+        import from excel with assets
+    """
+    contracts = list()
+    for _, asset in assets.iterrows():
+        au_contract = assetuniverse.AssetUniverseContract(
+            symbol=asset['symbol'],
+            localSymbol=None,#asset['localSymbol'],
+            secType=asset['secType'],
+            currency=asset['currency'],
+            exchange=asset['exchange'],
+            data_source=asset['data_source']
+        )
+        contracts.append(au_contract)
+    return contracts
+
+
 
 parser = argparse.ArgumentParser(description='Allocate portfolio using adaptive asset allocation principals.')
 parser.add_argument('assetsfile', type=str)
@@ -38,7 +63,8 @@ max_ind_allocations = [0.4, 0.5, 0.6]
 assets = pd.read_excel(args.assetsfile)
 end = datetime.date.today()
 start = end - datetime.timedelta(days=(8/5)*max(lookbacks) + 10)
-au = AssetUniverse(start, end, assets['Stock/ETF'].to_list())
+sym = parse_to_contracts(assets)
+au = AssetUniverse(start, end, sym, offline=True)
 
 # Create subportfolios
 num_subportfolios = len(lookbacks)* \

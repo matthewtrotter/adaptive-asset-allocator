@@ -34,15 +34,15 @@ class Subportfolio(object):
             print(f'Finished subportfolio: {id} of {total_ids}')
 
     def sort_by_qualitative_metric(self, assets: pd.DataFrame) -> List:
-        without_rating = assets[['Stock/ETF', self.qualitative_metric]].loc[assets[self.qualitative_metric].isna()]
-        with_rating = assets[['Stock/ETF', self.qualitative_metric]].loc[assets[self.qualitative_metric].notna()]
-        with_rating = with_rating[['Stock/ETF', self.qualitative_metric]].sort_values(
+        without_rating = assets[['symbol', self.qualitative_metric]].loc[assets[self.qualitative_metric].isna()]
+        with_rating = assets[['symbol', self.qualitative_metric]].loc[assets[self.qualitative_metric].notna()]
+        with_rating = with_rating[['symbol', self.qualitative_metric]].sort_values(
             by=self.qualitative_metric, 
             ascending=self.qualitative_metric_ascending[self.qualitative_metric], 
             ignore_index=True
             )
         num_keep = int(np.ceil(max(self.qualitative_threshold*len(with_rating), self.qualitative_min_keep)))
-        keep_assets = with_rating['Stock/ETF'].iloc[-num_keep:].to_list() + without_rating['Stock/ETF'].to_list()
+        keep_assets = with_rating['symbol'].iloc[-num_keep:].to_list() + without_rating['symbol'].to_list()
         if self.qualitative_metric == 'Valueline 3-5 Year Proj. Return High':
             x = 1
         return keep_assets
@@ -72,8 +72,8 @@ class Subportfolio(object):
         optimized_weights = result.x.transpose()
 
         weights = pd.Series(
-            data=np.zeros(len(self.au.sym)), 
-            index=self.au.sym
+            data=np.zeros(len(self.au.sym_list)), 
+            index=self.au.sym_list
             )
         weights.loc[assets] = optimized_weights
         return weights
