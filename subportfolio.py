@@ -14,6 +14,7 @@ class Subportfolio(object):
         self.subportfolio_threshold = params[5]
         self.subportfolio_min_keep = params[6]
         self.max_ind_allocation = params[7]
+        self.min_ind_allocation = 0.0
 
         self.au = au
 
@@ -65,7 +66,7 @@ class Subportfolio(object):
             args=covmatrix,
             method='SLSQP',
             constraints=cons,
-            bounds=opt.Bounds(0, self.max_ind_allocation),
+            bounds=opt.Bounds(self.min_ind_allocation, self.max_ind_allocation),
             tol=1e-13,
             options={'maxiter': 1000, 'disp': False}
         )

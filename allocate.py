@@ -57,14 +57,14 @@ qualitative_thresholds = [0.2, 0.333, 0.5]
 qualitative_min_keep = [2,]
 subportfolio_thresholds = [0.2, 0.333, 0.5]
 subportfolio_min_keep = [3,]
-max_ind_allocations = [0.4, 0.5, 0.6]
+max_ind_allocations = [0.4, 0.5, 0.6, 0.7]
 
 # Define asset universe
 assets = pd.read_excel(args.assetsfile)
 end = datetime.date.today()
 start = end - datetime.timedelta(days=(8/5)*max(lookbacks) + 10)
 sym = parse_to_contracts(assets)
-au = AssetUniverse(start, end, sym, offline=True)
+au = AssetUniverse(start, end, sym, offline=False)
 
 # Create subportfolios
 num_subportfolios = len(lookbacks)* \
