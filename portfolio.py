@@ -5,7 +5,8 @@ from subportfolio import Subportfolio
 from assetuniverse import AssetUniverse
 
 class Portfolio:
-    def __init__(self, subportfolios: List[Subportfolio], au: AssetUniverse, nav: float):
+    def __init__(self, subportfolios: List[Subportfolio], au: AssetUniverse, nav: float, leverage: float=1.0):
+        self.leverage = leverage
         self.weights = self.combine_weights(subportfolios)
         self.allocations = self.calculate_allocations(self.weights, au, nav)
     
@@ -28,8 +29,10 @@ class Portfolio:
         allocations.loc[:,'Allocation ($)'] = nav*allocations['Allocation (%)']
         allocations.loc[:,'Shares'] = round(allocations['Allocation ($)']/au.originalprices[allocations.index].iloc[-1], 0)
         allocations.loc[:,'Shares'] = allocations.loc[:,'Shares'].astype(int)
-        allocations.loc[:,'Allocation (%)'] = round(100*allocations.loc[:,'Allocation (%)'], 2)
+        allocations.loc[:,'Allocation (%)'] = round(100*allocations.loc[:,'Allocation (%)'], 1)
         allocations.loc[:,'Allocation ($)'] = round(allocations.loc[:,'Allocation ($)'], 2)
+        allocations.loc[:,'Leveraged (%)'] = self.leverage*allocations.loc[:,'Allocation (%)']
+        allocations.loc[:,'Leveraged ($)'] = self.leverage*allocations.loc[:,'Allocation ($)']
         return allocations
 
     def __str__(self):

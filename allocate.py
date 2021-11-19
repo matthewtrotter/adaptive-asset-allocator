@@ -36,6 +36,7 @@ def parse_to_contracts(assets: pd.DataFrame):
 parser = argparse.ArgumentParser(description='Allocate portfolio using adaptive asset allocation principals.')
 parser.add_argument('assetsfile', type=str)
 parser.add_argument('-n', '--nav', type=float, default=100000, help='Portfolio net asset value ($)')
+parser.add_argument('-l', '--lev', type=float, default=1.0, help='Total portfolio leverage (Default: 1.0)')
 args = parser.parse_args()
 
 # Define subportfolio parameters
@@ -90,7 +91,7 @@ subportfolios = [Subportfolio(params, au, assets, i, num_subportfolios)
 ]
 
 # Combine subportfolios
-portfolio = Portfolio(subportfolios, au, args.nav)
+portfolio = Portfolio(subportfolios, au, args.nav, args.lev)
 
 # Display
 print(portfolio)
