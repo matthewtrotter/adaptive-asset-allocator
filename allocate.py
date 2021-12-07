@@ -10,7 +10,7 @@ from subportfolio import Subportfolio
 from portfolio import Portfolio
 
 
-def parse_to_contracts(assets: pd.DataFrame):
+def parse_to_contracts(assets: pd.DataFrame, start, end):
     """Parse the symbols in the dataframe into assetuniverse contracts
 
     Parameters
@@ -20,13 +20,13 @@ def parse_to_contracts(assets: pd.DataFrame):
     """
     contracts = list()
     for _, asset in assets.iterrows():
-        au_contract = assetuniverse.AssetUniverseContract(
-            symbol=asset['symbol'],
-            localSymbol=None,#asset['localSymbol'],
-            secType=asset['secType'],
-            currency=asset['currency'],
-            exchange=asset['exchange'],
-            data_source=asset['data_source']
+        au_contract = assetuniverse.Asset(
+            start=start,
+            end=end,
+            ticker=asset['ticker'],
+            alternate_tickers=asset['alternate tickers'],
+            display_name=asset['display name'],
+            data_source=asset['data source']
         )
         contracts.append(au_contract)
     return contracts
@@ -46,14 +46,6 @@ momentum_metrics = [
     metrics.sharpe_ratio,
     metrics.z_score
 ]
-qualitative_metrics = [
-    'Morningstar Star Rating (1-5)',
-    'Morningstar Price/FVE',
-    'Valueline 3-5 Year Proj. Return High',
-    'Valueline 3-5 Year Proj. Return Low',
-    'Valueline Timeliness (1-5)',
-    'Valueline Safety (1-5)'
-]
 qualitative_thresholds = [0.2, 0.333, 0.5]
 qualitative_min_keep = [2,]
 subportfolio_thresholds = [0.2, 0.333, 0.5]
@@ -64,15 +56,12 @@ max_ind_allocations = [0.4, 0.5, 0.6, 0.7]
 assets = pd.read_excel(args.assetsfile)
 end = datetime.date.today()
 start = end - datetime.timedelta(days=(8/5)*max(lookbacks) + 10)
-sym = parse_to_contracts(assets)
-au = AssetUniverse(start, end, sym, offline=False)
+sym = parse_to_contracts(assets, start, end)
+au = AssetUniverse(start, end, sym, offline=False, borrow_spread=1.5)
 
 # Create subportfolios
 num_subportfolios = len(lookbacks)* \
                     len(momentum_metrics)* \
-                    len(qualitative_metrics)* \
-                    len(qualitative_thresholds)* \
-                    len(qualitative_min_keep)* \
                     len(subportfolio_thresholds)* \
                     len(subportfolio_min_keep)* \
                     len(max_ind_allocations)
@@ -81,9 +70,6 @@ subportfolios = [Subportfolio(params, au, assets, i, num_subportfolios)
     for i, params in enumerate(itertools.product(
         lookbacks,
         momentum_metrics,
-        qualitative_metrics,
-        qualitative_thresholds,
-        qualitative_min_keep,
         subportfolio_thresholds,
         subportfolio_min_keep,
         max_ind_allocations
@@ -95,4 +81,4 @@ portfolio = Portfolio(subportfolios, au, args.nav, args.lev)
 
 # Display
 print(portfolio)
-au.plotprices()
+au.plot_prices()

@@ -24,10 +24,11 @@ class Portfolio:
             data=0*weights.sort_values(ascending=False),
             columns=['Shares']
         )
-        allocations.loc[:,'Price ($)'] = round(au.originalprices[allocations.index].iloc[-1], 2)
+        prices = au.prices(allocations.index, normalize=False)
+        allocations.loc[:,'Price ($)'] = round(prices[allocations.index].iloc[-1], 2)
         allocations.loc[:,'Allocation (%)'] =  weights.sort_values(ascending=False)
         allocations.loc[:,'Allocation ($)'] = nav*allocations['Allocation (%)']
-        allocations.loc[:,'Shares'] = round(allocations['Allocation ($)']/au.originalprices[allocations.index].iloc[-1], 0)
+        allocations.loc[:,'Shares'] = round(allocations['Allocation ($)']/prices[allocations.index].iloc[-1], 0)
         allocations.loc[:,'Shares'] = allocations.loc[:,'Shares'].astype(int)
         allocations.loc[:,'Allocation (%)'] = round(100*allocations.loc[:,'Allocation (%)'], 1)
         allocations.loc[:,'Allocation ($)'] = round(allocations.loc[:,'Allocation ($)'], 2)

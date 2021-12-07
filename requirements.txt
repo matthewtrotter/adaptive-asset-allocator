@@ -1,0 +1,5 @@
+numpy
+scipy
+openpyxl
+pandas
+git+https://github.com/matthewtrotter/assetuniverse@v3.0.0#egg=assetuniverse
