@@ -105,10 +105,11 @@ subportfolios = [Subportfolio(params, au, assets, 1.0, i, num_subportfolios)
         total_short_allocations
     ))
 ]
-# set_start_method('fork')
-# with Pool() as p:
-#     subportfolios = p.map(run_subportfolio, subportfolios)
-subportfolios = list(map(run_subportfolio, subportfolios))
+
+set_start_method('fork')
+with Pool() as p:
+    subportfolios = p.map(run_subportfolio, subportfolios)
+# subportfolios = list(map(run_subportfolio, subportfolios))        # single-threaded for debugging
 
 # Combine subportfolios
 portfolio = Portfolio(subportfolios, au, args.nav, args.targetvol/100.0)
