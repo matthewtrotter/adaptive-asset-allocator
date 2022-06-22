@@ -72,7 +72,7 @@ class Subportfolio(object):
             bound_left[-nshort:] = self.max_ind_short_allocation
             bound_right[-nshort:] = self.min_ind_short_allocation
         bounds = opt.Bounds(bound_left, bound_right)
-        initial_weights = self._rand_initial_weights(bounds, cons)
+        initial_weights = self._rand_initial_weights(bounds, nshort)
         
         result = opt.minimize(
             fun=self._expected_variance,
@@ -93,15 +93,14 @@ class Subportfolio(object):
         weights.loc[all_assets] = optimized_weights
         return weights
 
-    def _rand_initial_weights(self, bounds: opt.Bounds, cons: List[Dict]):
+    def _rand_initial_weights(self, bounds: opt.Bounds, nshort: int):
         """Set an initial array of weights that safisfy the bounds and constraints
 
         Parameters
         ----------
         bounds : opt.Bounds
             Bounds for each individual asset
-        cons : List[Dict]
-            List of constraints according to https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html 
+        nshort : number of short assets
         
         Returns
         -------
@@ -109,7 +108,12 @@ class Subportfolio(object):
             Initial weights that satisfy the bounds and constraints
         """
         initial_weights = np.ones(bounds.lb.shape)
-        for _ in range(100000):
+        if nshort > 0:
+            initial_weights[-nshort:] = 0
+        initial_weights = initial_weights*self.total_weight/np.sum(initial_weights)
+        if self._sum_weights(initial_weights) == 0 and self._sum_short_weights(initial_weights) > 0:
+            return initial_weights
+        for _ in range(1000000):
             initial_weights = np.random.uniform(
                 low=bounds.lb,
                 high=bounds.ub
@@ -134,4 +138,4 @@ class Subportfolio(object):
         This sum must be > 0.
         """
         nshort = len(self.short_assets)
-        return np.sum(weights[-nshort:]) + self.total_short_allocation
+        return np.sum(weights[-nshort:]) + self.total_short_allocation + 1e-6
